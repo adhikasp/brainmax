@@ -2,7 +2,7 @@ import { createSignal, createRoot, onMount } from "solid-js";
 
 import type { Paper } from "./papers";
 
-const STORAGE_KEY = "arxivtok_favorites";
+const STORAGE_KEY = "brainmax_favorites";
 
 interface StoredFavorite {
     id: string;

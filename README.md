@@ -1,4 +1,4 @@
-# ArXivTok 📱
+# BrainMax 🧠
 
 A TikTok-style interface for exploring research papers across multiple sources including arXiv, medRxiv, bioRxiv, PubMed and HackerNews.
 
@@ -35,8 +35,8 @@ A TikTok-style interface for exploring research papers across multiple sources i
 Requirements: Node 22+, pnpm, Rust (stable).
 
 ```bash
-git clone https://github.com/adhikasp/arxivtok.git
-cd arxivtok
+git clone https://github.com/adhikasp/brainmax.git
+cd brainmax
 pnpm install
 
 # 1. API (port 3001). OPENROUTER_API_KEY is optional: without it abstracts are returned unmodified.
@@ -61,11 +61,11 @@ pnpm dev
 
 ```bash
 pnpm build                                  # static files -> .output/public
-(cd server && cargo build --release)        # binary -> server/target/release/arxivtok
+(cd server && cargo build --release)        # binary -> server/target/release/brainmax
 ```
 
 Serve `.output/public` with any web server (falling back to `index.html`) and proxy `/api/*` to the binary,
-or run `STATIC_DIR=.output/public arxivtok` for a single process. [`deploy/`](deploy) has a Caddy and a systemd example.
+or run `STATIC_DIR=.output/public brainmax` for a single process. [`deploy/`](deploy) has a Caddy and a systemd example.
 
 ## 📱 Usage
 
@@ -147,4 +147,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-MIT License - See [LICENSE](LICENSE) for details
+MIT License - See [LICENSE](LICENSE) for details.
+
+BrainMax started from [ArXivTok](https://github.com/Miguel07Alm/arxivtok) by Miguel07Alm (MIT) and has since been rewritten (Rust API, static SPA).

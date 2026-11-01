@@ -4,7 +4,7 @@ interface TutorialOverlayProps {
     onDismiss?: () => void;
 }
 
-const TUTORIAL_KEY = 'arxivtok_tutorial_shown';
+const TUTORIAL_KEY = 'brainmax_tutorial_shown';
 
 const isTutorialShown = () => {
     if (typeof window === 'undefined') return false;

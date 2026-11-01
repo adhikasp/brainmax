@@ -1,6 +1,6 @@
 {
-  "name": "ArXivTok",
-  "short_name": "ArXivTok",
+  "name": "BrainMax",
+  "short_name": "BrainMax",
   "description": "Discover research papers with a TikTok-like interface",
   "start_url": "/",
   "display": "standalone",

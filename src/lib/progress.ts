@@ -24,9 +24,9 @@ interface Achievement {
 }
 
 const STORAGE_KEY = {
-    PROGRESS: "arxivtok_reading_progress",
-    STREAK: "arxivtok_streak",
-    ACHIEVEMENTS: "arxivtok_achievements"
+    PROGRESS: "brainmax_reading_progress",
+    STREAK: "brainmax_streak",
+    ACHIEVEMENTS: "brainmax_achievements"
 };
 
 const ACHIEVEMENTS: Achievement[] = [

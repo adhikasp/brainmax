@@ -64,7 +64,7 @@ async fn health() -> impl IntoResponse {
         Json(json!({
             "status": "ok",
             "timestamp": chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
-            "service": "arxivtok",
+            "service": "brainmax",
         })),
     )
 }
@@ -81,7 +81,7 @@ async fn shutdown() {
 async fn main() {
     let http = Client::builder()
         .timeout(Duration::from_secs(30))
-        .user_agent("arxivtok (+https://arxivtok.adhikasp.my.id)")
+        .user_agent("brainmax (+https://brainmax.adhikasp.my.id)")
         .build()
         .expect("http client");
     let llm = env::var("OPENROUTER_API_KEY").ok().filter(|k| !k.is_empty()).map(|key| {
@@ -109,6 +109,6 @@ async fn main() {
 
     let bind = env::var("BIND").unwrap_or_else(|_| "127.0.0.1:3001".into());
     let listener = tokio::net::TcpListener::bind(&bind).await.expect("bind");
-    eprintln!("arxivtok listening on {bind}");
+    eprintln!("brainmax listening on {bind}");
     axum::serve(listener, app).with_graceful_shutdown(shutdown()).await.expect("serve");
 }

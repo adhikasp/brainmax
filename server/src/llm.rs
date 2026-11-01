@@ -99,7 +99,7 @@ impl Llm {
             .post(OPENROUTER_URL)
             .timeout(Duration::from_secs(90))
             .bearer_auth(&self.key)
-            .header("X-Title", "ArxivTok")
+            .header("X-Title", "BrainMax")
             .json(&json!({
                 "model": self.model,
                 "reasoning": { "effort": self.effort },

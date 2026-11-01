@@ -18,15 +18,15 @@ export default createHandler(() => (
 
                     {/* Open Graph / Facebook */}
                     <meta property="og:type" content="website" />
-                    <meta property="og:url" content="https://arxivtok.adhikasp.my.id/" />
-                    <meta property="og:title" content="ArXivTok - Research Papers in TikTok Style" />
+                    <meta property="og:url" content="https://brainmax.adhikasp.my.id/" />
+                    <meta property="og:title" content="BrainMax - Research Papers in TikTok Style" />
                     <meta property="og:description" content="Explore research papers from arXiv, medRxiv, bioRxiv, PubMed and HackerNews with a TikTok-style interface. Features AI-powered abstract simplification, LaTeX rendering, and real-time search." />
                     <meta property="og:image" content="/demo.png" />
 
                     {/* Twitter */}
                     <meta property="twitter:card" content="summary_large_image" />
-                    <meta property="twitter:url" content="https://arxivtok.adhikasp.my.id/" />
-                    <meta property="twitter:title" content="ArXivTok - Research Papers in TikTok Style" />
+                    <meta property="twitter:url" content="https://brainmax.adhikasp.my.id/" />
+                    <meta property="twitter:title" content="BrainMax - Research Papers in TikTok Style" />
                     <meta property="twitter:description" content="Explore research papers from arXiv, medRxiv, bioRxiv, PubMed and HackerNews with a TikTok-style interface. Features AI-powered abstract simplification, LaTeX rendering, and real-time search." />
                     <meta property="twitter:image" content="/demo.png" />
 

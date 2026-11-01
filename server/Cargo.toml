@@ -1,12 +1,12 @@
 [package]
-name = "arxivtok-server"
+name = "brainmax-server"
 version = "0.1.0"
 edition = "2021"
-description = "API for ArxivTok: paper sources + LLM abstract simplification"
+description = "API for BrainMax: paper sources + LLM abstract simplification"
 license = "MIT"
 
 [[bin]]
-name = "arxivtok"
+name = "brainmax"
 path = "src/main.rs"
 
 [dependencies]

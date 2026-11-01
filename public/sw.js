@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arxivtok-v1';
+const CACHE_NAME = 'brainmax-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',

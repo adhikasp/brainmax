@@ -1,11 +1,11 @@
 [Unit]
-Description=arxivtok API
+Description=brainmax API
 After=network.target
 [Service]
-User=arxivtok
+User=brainmax
 # Env: OPENROUTER_API_KEY=..., BIND=127.0.0.1:3001
-EnvironmentFile=/etc/arxivtok.env
-ExecStart=/opt/arxivtok/arxivtok
+EnvironmentFile=/etc/brainmax.env
+ExecStart=/opt/brainmax/brainmax
 Restart=always
 MemoryMax=64M
 NoNewPrivileges=yes

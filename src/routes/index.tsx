@@ -353,9 +353,9 @@ export default function Home() {
                             <div>
                                 <h1 class="text-xl sm:text-2xl font-bold tracking-tight">
                                     <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                                        ArXiv
+                                        Brain
                                     </span>
-                                    <span class="text-gray-900">Tok</span>
+                                    <span class="text-gray-900">Max</span>
                                 </h1>
                                 <p class="hidden sm:block text-sm text-gray-500 mt-1">
                                     Discover research, swipe by swipe
@@ -499,7 +499,7 @@ export default function Home() {
                     class="p-3 bg-white/90 backdrop-blur-sm shadow-lg rounded-full 
                            hover:bg-white transition-all duration-300 group
                            hover:scale-105 active:scale-95"
-                    title="About ArXivTok"
+                    title="About BrainMax"
                 >
                     <svg
                         class="w-6 h-6 text-gray-600 group-hover:text-gray-800"
