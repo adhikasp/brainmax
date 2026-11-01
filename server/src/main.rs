@@ -1,3 +1,4 @@
+mod explainers;
 mod llm;
 mod model;
 mod sources;
@@ -10,7 +11,7 @@ use axum::{
     Json, Router,
 };
 use futures::future::join_all;
-use llm::{Llm, Persona};
+use llm::Llm;
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::json;
@@ -21,6 +22,7 @@ use tower_http::services::{ServeDir, ServeFile};
 struct AppState {
     http: Client,
     llm: Option<Arc<Llm>>,
+    store: explainers::Store,
 }
 
 /// Everything arrives as a string and is parsed leniently, like the original `Number(x) || default`.
@@ -31,7 +33,6 @@ struct Params {
     per_page: Option<String>,
     q: Option<String>,
     source: Option<String>,
-    persona: Option<String>,
 }
 
 async fn papers(State(st): State<AppState>, Query(p): Query<Params>) -> Response {
@@ -40,7 +41,6 @@ async fn papers(State(st): State<AppState>, Query(p): Query<Params>) -> Response
     let per_page = num(&p.per_page, 10).min(20);
     let q: String = p.q.unwrap_or_default().chars().take(200).collect();
     let source = p.source.unwrap_or_else(|| "arxiv".into());
-    let persona = Persona::parse(p.persona.as_deref().unwrap_or("default"));
 
     let mut papers = match sources::fetch(&st.http, &source, &q, page, per_page).await {
         Ok(v) => v,
@@ -50,12 +50,30 @@ async fn papers(State(st): State<AppState>, Query(p): Query<Params>) -> Response
         }
     };
     if let Some(llm) = &st.llm {
-        let simplified = join_all(papers.iter().map(|p| llm.simplify(&p.summary, persona))).await;
+        let simplified = join_all(papers.iter().map(|p| llm.simplify(&p.summary))).await;
         for (p, s) in papers.iter_mut().zip(simplified) {
             p.set_summary(s);
         }
     }
     Json(papers).into_response()
+}
+
+#[derive(Deserialize)]
+struct ExplainerParams {
+    ids: Option<String>,
+}
+
+/// Ordered ids of every stored explainer (newest paper day first). The client filters out what it has already seen.
+async fn explainer_ids(State(st): State<AppState>) -> Response {
+    let ids = tokio::task::spawn_blocking(move || st.store.ids()).await.unwrap_or_default();
+    ([(header::CACHE_CONTROL, "public, max-age=60")], Json(ids)).into_response()
+}
+
+/// Up to 10 explainers by comma-separated id.
+async fn explainers_by_id(State(st): State<AppState>, Query(p): Query<ExplainerParams>) -> Response {
+    let ids: Vec<String> = p.ids.unwrap_or_default().split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty() && s.len() <= 80).take(10).collect();
+    let rows = tokio::task::spawn_blocking(move || st.store.get(&ids)).await.unwrap_or_default();
+    ([(header::CACHE_CONTROL, "public, max-age=300")], Json(rows)).into_response()
 }
 
 async fn health() -> impl IntoResponse {
@@ -98,8 +116,14 @@ async fn main() {
 
     let mut app = Router::new()
         .route("/api/papers", get(papers))
+        .route("/api/explainers/ids", get(explainer_ids))
+        .route("/api/explainers", get(explainers_by_id))
         .route("/api/health", get(health))
-        .with_state(AppState { http, llm });
+        .with_state(AppState {
+            http,
+            llm,
+            store: explainers::Store::new(env::var("EXPLAINERS_DB").unwrap_or_else(|_| "/var/lib/brainmax/explainers.db".into())),
+        });
 
     // Optional: serve the built frontend directly (local dev / single-binary use).
     // In production Caddy serves the static files and only proxies /api here.

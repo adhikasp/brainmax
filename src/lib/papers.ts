@@ -1,5 +1,3 @@
-import type { Persona } from "./llm";
-
 export type Source = "arxiv" | "medrxiv" | "biorxiv" | "pubmed" | "hackernews";
 
 export interface Paper {
@@ -13,6 +11,7 @@ export interface Paper {
     source: Source;
     category?: string;
     institution?: string;
+    kind?: "end";
     sourceIcon?: string; // Para mostrar el icono de la fuente en la tarjeta
 }
 
@@ -21,7 +20,6 @@ export interface FetchOptions {
     perPage: number;
     queries?: string[];
     source?: Source;
-    persona?: Persona;
 }
 
 export async function fetchPapers({
@@ -29,13 +27,11 @@ export async function fetchPapers({
     perPage,
     queries,
     source = "arxiv",
-    persona = "default",
 }: FetchOptions): Promise<Paper[]> {
     const params = new URLSearchParams({
         page: page.toString(),
         perPage: perPage.toString(),
         source: source,
-        persona: persona,
     });
 
     if (queries?.length) {

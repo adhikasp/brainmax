@@ -7,7 +7,7 @@ A TikTok-style interface for exploring research papers across multiple sources i
 - 📱 TikTok-style vertical swipe interface
 - 🎯 Multi-source paper browsing (arXiv, medRxiv, bioRxiv, PubMed, HackerNews)
 - 🧠 AI-powered abstract simplification using OpenRouter (GPT 6 Luna)
-- 👤 Customizable explanation personas (college student, professional, layman)
+- ✨ Daily animated visual explainers generated from full papers, then plain-English abstracts
 - ❤️ Save favorite papers
 - 🔍 Real-time search with suggestions
 - 📲 Touch-optimized mobile experience
@@ -74,7 +74,6 @@ or run `STATIC_DIR=.output/public brainmax` for a single process. [`deploy/`](de
 - **Tap links**: Open source papers
 - **Search bar**: Find specific papers
 - **Source selector**: Switch between paper sources
-- **Persona selector**: Change how abstracts are explained
   - **Default**: Simplified for general audience
   - **College Student**: Explained for students in that field
   - **Professional**: Technical explanation for experts
@@ -117,7 +116,7 @@ The app integrates with multiple academic paper sources:
 server/              # Rust API
 ├── src/main.rs      # routes: GET /api/papers, GET /api/health
 ├── src/sources.rs   # arXiv / medRxiv / bioRxiv / PubMed / HN fetchers
-└── src/llm.rs       # OpenRouter abstract simplification (personas, cache)
+└── src/llm.rs       # OpenRouter abstract simplification (cache)
 src/                 # SolidJS SPA
 ├── components/      # UI components (PaperCard, SearchBar, ...)
 ├── lib/             # papers.ts, favorites.ts, progress.ts, ...
@@ -132,7 +131,7 @@ deploy/              # Caddy + systemd examples
 - **PaperRoulette.tsx**: Handles the TikTok-style paper swiping interface
 - **SearchBar.tsx**: Implements real-time search with suggestions
 - **SourceMixer.tsx**: Controls paper source selection and mixing
-- **PersonaSelector.tsx**: Controls abstract explanation style
+- **ExplainerCard.tsx**: Animated SVG explainer cards (from the explainers SQLite DB)
 - **FavoritesModal.tsx**: Manages saved/favorite papers
 
 ### Core Libraries

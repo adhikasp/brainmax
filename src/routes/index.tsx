@@ -1,10 +1,8 @@
-import { createSignal, onMount, For, Show } from "solid-js";
+import { createEffect, createSignal, onMount, For, Show } from "solid-js";
 import { isServer } from "solid-js/web";
-import { toast } from "solid-sonner";
 
-import { PersonaSelector, personas, PersonaOption } from "../components/PersonaSelector";
-import { usePersonaPreference } from "../lib/personaPreferences";
 
+import { EndCard, ExplainerCard } from "@/components/ExplainerCard";
 import { FavoritesModal } from "@/components/FavoritesModal";
 import { PaperCard } from "@/components/PaperCard";
 import { PaperRoulette } from "@/components/PaperRoulette";
@@ -12,6 +10,7 @@ import { QueryBadge } from "@/components/QueryBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { SourceMixer } from "@/components/SourceMixer";
 import { AboutDialog } from "@/components/ui/AboutDialog";
+import { fetchExplainerIds, fetchExplainers, loadSeen, markSeen } from "@/lib/explainers";
 import { favorites, loadFavorites, setFavorites } from "@/lib/favorites";
 import { fetchPapers, Paper, Source } from "@/lib/papers";
 
@@ -21,22 +20,6 @@ import { fetchPapers, Paper, Source } from "@/lib/papers";
 const defaultQueries = [
     "all",
 ];
-
-// Client-only component to render persona icon after hydration
-function ClientOnly(props: { children: any }) {
-    const [mounted, setMounted] = createSignal(false);
-    
-    onMount(() => {
-        // Set mounted after initial render to ensure hydration is complete
-        setTimeout(() => setMounted(true), 0);
-    });
-    
-    return (
-        <Show when={mounted()}>
-            {props.children}
-        </Show>
-    );
-}
 
 export default function Home() {
     const [papers, setPapers] = createSignal<any[]>([]);
@@ -65,15 +48,19 @@ export default function Home() {
     ]);
     const [showSourceMixer, setShowSourceMixer] = createSignal(false);
     const [isCardInteracting, setIsCardInteracting] = createSignal(false);
-    const [showPersonaSelector, setShowPersonaSelector] = createSignal(false);
-    
-    // Use the persona preference hook
-    const { selectedPersona, updatePersona } = usePersonaPreference();
+    // Visual explainers go first, then the live abstract feed, then an "all caught up" card.
+    const [explainerQueue, setExplainerQueue] = createSignal<string[] | null>(null);
+    const [endReached, setEndReached] = createSignal(false);
 
+    createEffect(() => {
+        const p = papers()[currentIndex()];
+        if (p?.kind === "explainer") markSeen(p.id);
+    });
+    
     // Initialize on mount
     onMount(() => {
         if (!isServer) {
-            // Load papers with the correct persona after component mounts
+            // Load papers after component mounts
             setTimeout(() => {
                 loadPapers(true);
             }, 0);
@@ -90,14 +77,42 @@ export default function Home() {
     };
 
     async function loadPapers(reset = false) {
-        if (isLoading()) return;
+        if (isLoading() || (endReached() && !reset)) return;
         
         setIsLoading(true);
         
         try {
-            // Ensure we have the latest persona preference before making the request
-            const currentPersona = selectedPersona();
-            
+            if (reset) {
+                setEndReached(false);
+                setExplainerQueue(null);
+            }
+            // Explainers only apply to the unfiltered arXiv feed.
+            const plainFeed =
+                activeQueries().length === 1 &&
+                activeQueries()[0] === "all" &&
+                selectedSources().includes("arxiv");
+            if (plainFeed) {
+                let queue = explainerQueue();
+                if (queue === null) {
+                    const seen = loadSeen();
+                    queue = (await fetchExplainerIds().catch(() => [])).filter((id) => !seen.has(id));
+                }
+                if (queue.length > 0) {
+                    const ex = await fetchExplainers(queue.slice(0, 5)).catch(() => []);
+                    setExplainerQueue(queue.slice(5));
+                    if (ex.length > 0) {
+                        setPapers(reset ? ex : [...papers(), ...ex]);
+                        if (reset) {
+                            setCurrentIndex(0);
+                            setPage(0);
+                        }
+                        return;
+                    }
+                } else {
+                    setExplainerQueue([]);
+                }
+            }
+
             const results = await Promise.all(
                 selectedSources().map((source) =>
                     fetchPapers({
@@ -105,7 +120,6 @@ export default function Home() {
                         perPage: Math.ceil(10 / selectedSources().length),
                         queries: activeQueries(),
                         source,
-                        persona: currentPersona
                     })
                 )
             );
@@ -118,6 +132,11 @@ export default function Home() {
                         new Date(a.published).getTime()
                 );
 
+            if (!reset && mixedPapers.length === 0) {
+                setEndReached(true);
+                setPapers([...papers(), { id: "end", kind: "end" } as Paper]);
+                return;
+            }
             setPapers(reset ? mixedPapers : [...papers(), ...mixedPapers]);
             setPage(reset ? 1 : page() + 1);
             if (reset) setCurrentIndex(0);
@@ -475,11 +494,25 @@ export default function Home() {
                                     })`,
                                 }}
                             >
-                                <PaperCard
-                                    paper={paper}
-                                    showTutorial={index() === 0}
-                                    onSwipe={handleSwipe}
-                                />
+                                <Show
+                                    when={paper.kind === "explainer"}
+                                    fallback={
+                                        <Show
+                                            when={paper.kind === "end"}
+                                            fallback={
+                                                <PaperCard
+                                                    paper={paper}
+                                                    showTutorial={index() === 0}
+                                                    onSwipe={handleSwipe}
+                                                />
+                                            }
+                                        >
+                                            <EndCard />
+                                        </Show>
+                                    }
+                                >
+                                    <ExplainerCard paper={paper} onSwipe={handleSwipe} />
+                                </Show>
                             </div>
                         )}
                     </For>
@@ -487,7 +520,7 @@ export default function Home() {
             </div>
 
             <PaperRoulette
-                papers={papers()}
+                papers={papers().filter((p) => !p.kind)}
                 onSelect={handleRouletteSelect}
                 onRandomize={handleRandomize}
             />
@@ -517,39 +550,6 @@ export default function Home() {
                 </button>
 
                 <div class="flex space-x-3">
-                    <button
-                        onClick={() => setShowPersonaSelector(true)}
-                        class="flex items-center space-x-2 px-4 py-3 bg-white/90 backdrop-blur-sm
-                               shadow-lg rounded-full hover:bg-white transition-all duration-300
-                               hover:scale-105 active:scale-95 group relative"
-                        title={`Abstract Style: ${personas.find((p: PersonaOption) => p.id === selectedPersona())?.name || "Default"}`}
-                    >
-                        <Show when={isLoading() && selectedPersona() !== "default"} fallback={
-                            <svg 
-                                class="w-6 h-6 text-blue-500" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                viewBox="0 0 24 24"
-                            >
-                                <path 
-                                    stroke-linecap="round" 
-                                    stroke-linejoin="round" 
-                                    stroke-width="1.5" 
-                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                                />
-                            </svg>
-                        }>
-                            <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                        </Show>
-                        <ClientOnly>
-                            <Show when={selectedPersona() !== "default"}>
-                                <span class="font-medium text-gray-700 group-hover:text-gray-900">
-                                    {personas.find((p: PersonaOption) => p.id === selectedPersona())?.icon || ""}
-                                </span>
-                            </Show>
-                        </ClientOnly>
-                    </button>
-
                     <button
                         onClick={() => setShowFavorites(true)}
                         class="flex items-center space-x-2 px-4 py-3 bg-white/90 backdrop-blur-sm
@@ -586,28 +586,6 @@ export default function Home() {
                 }}
                 isOpen={showSourceMixer()}
                 onClose={() => setShowSourceMixer(false)}
-            />
-
-            <PersonaSelector
-                selectedPersona={selectedPersona()}
-                onPersonaChange={(persona) => {
-                    const oldPersona = selectedPersona();
-                    updatePersona(persona);
-                    loadPapers(true);
-                    
-                    // Show toast notification
-                    if (persona !== oldPersona) {
-                        const personaOption = personas.find((p: PersonaOption) => p.id === persona);
-                        toast.success(`Abstract style changed to ${personaOption?.name}`, {
-                            description: personaOption?.description,
-                            icon: personaOption?.icon,
-                            duration: 3000,
-                        });
-                    }
-                }}
-                isOpen={showPersonaSelector()}
-                onClose={() => setShowPersonaSelector(false)}
-                isLoading={isLoading()}
             />
         </main>
     );
