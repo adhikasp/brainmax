@@ -5,6 +5,12 @@ import type { Explainer } from "@/lib/explainers";
 // The SVG is rendered through <img>, so animations (SMIL/CSS) run but scripts and external loads never do.
 const svgUrl = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
+// Cards are authored on a square 400x400 canvas; older ones are 4:3. Use whatever the SVG declares.
+const aspect = (svg: string) => {
+    const m = svg.match(/viewBox="\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)\s*"/);
+    return m && Number(m[1]) > 0 && Number(m[2]) > 0 ? `${m[1]} / ${m[2]}` : "4 / 3";
+};
+
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const paragraphs = (t: string) =>
     t
@@ -56,8 +62,8 @@ export function ExplainerCard(props: { paper: Explainer; onSwipe?: (d: "up" | "d
                     <img
                         src={svgUrl(props.paper.svg)}
                         alt={`Animated explainer: ${props.paper.title}`}
-                        class="w-full rounded-xl bg-slate-900"
-                        style="aspect-ratio: 4 / 3;"
+                        class="w-full max-w-[520px] mx-auto block rounded-xl bg-slate-900"
+                        style={{ "aspect-ratio": aspect(props.paper.svg) }}
                         draggable={false}
                     />
                     <div class="mt-4 space-y-3 text-base leading-relaxed text-gray-700 pb-4">
